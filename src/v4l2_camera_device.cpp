@@ -218,11 +218,15 @@ Image::UniquePtr V4l2CameraDevice::capture()
   img->height = cur_data_format_.height;
   img->step = cur_data_format_.bytesPerLine;
   if (cur_data_format_.pixelFormat == V4L2_PIX_FMT_YUYV) {
-    img->encoding = sensor_msgs::image_encodings::YUV422;
+    img->encoding = sensor_msgs::image_encodings::YUV422_YUY2;
   } else if (cur_data_format_.pixelFormat == V4L2_PIX_FMT_GREY) {
     img->encoding = sensor_msgs::image_encodings::MONO8;
   } else {
-    RCLCPP_WARN(rclcpp::get_logger("v4l2_camera"), "Current pixel format is not supported yet");
+    RCLCPP_WARN(
+      rclcpp::get_logger("v4l2_camera"),
+      "Current pixel format is not supported yet: %s %d",
+      FourCC::toString(cur_data_format_.pixelFormat).c_str(),
+      cur_data_format_.pixelFormat);
   }
   img->data.resize(cur_data_format_.imageByteSize);
 
@@ -273,8 +277,10 @@ bool V4l2CameraDevice::requestDataFormat(const PixelFormat & format)
 
   RCLCPP_INFO(
     rclcpp::get_logger("v4l2_camera"),
-    "Requesting format: %sx%s", std::to_string(format.width).c_str(),
-    std::to_string(format.height).c_str());
+    "Requesting format: %sx%s %s",
+    std::to_string(format.width).c_str(),
+    std::to_string(format.height).c_str(),
+    FourCC::toString(format.pixelFormat).c_str());
 
   // Perform request
   if (-1 == ioctl(fd_, VIDIOC_S_FMT, &formatReq)) {

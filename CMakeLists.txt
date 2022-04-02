@@ -20,8 +20,9 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(image_transport REQUIRED)
 find_package(camera_info_manager REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
 
 add_library(v4l2_camera
   src/v4l2_camera.cpp
@@ -35,8 +36,9 @@ target_include_directories(v4l2_camera PUBLIC
 ament_target_dependencies(v4l2_camera
   "rclcpp"
   "rclcpp_components"
-  "image_transport"
-  "camera_info_manager")
+  "camera_info_manager"
+  "cv_bridge"
+  "image_transport")
 
 target_compile_options(v4l2_camera PRIVATE -Werror)
 

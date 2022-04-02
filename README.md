@@ -88,8 +88,12 @@ publishes images as `sensor_msgs/Image` messages.
 
 * `output_encoding` - `string`, default: `"rgb8"`
 
-    The encoding to use for the output image.  
-    Currently supported: `"rgb8"`, `"yuv422"` or `"mono8"`.
+    The encoding to use for the output image. Can be any supported by
+    `cv_bridge` given the input pixel format. Currently these are for
+    `"YUYV"`: `" yuv422_yuy2"` (no conversion), or `"mono8"`, `"rgb8"`,
+    `"bgr8"`, `"rgba8"` and `"bgra8"`, plus their 16 bit variants, and for
+    `"GREY"` these are `"mono8"` (no conversion), `"rgb8"`,
+    `"bgr8"`, `"rgba8"` and `"bgra8"`, plus their 16 bit variants.
 
 * `image_size` - `integer_array`, default: `[640, 480]`
 
