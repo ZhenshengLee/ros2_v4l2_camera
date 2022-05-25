@@ -1,0 +1,28 @@
+{
+  "target_path": {
+    "start_node_name": "/v4l2_camera",
+    "end_node_name": "/image_subscriber"
+  },
+  "nodes": [
+    {
+      "name": "/v4l2_camera",
+      "publish": {
+        "/image_raw": "{lambda()#1}",
+        "/camera_info": "{lambda()#2}"
+      }
+    },
+    {
+      "name": "/image_subscriber",
+      "callbacks": [
+        {
+          "type": "subscribe_callback",
+          "topic_name": "/image_raw",
+          "symbol": "ImageSubscriber::ImageSubscriber(rclcpp::NodeOptionsconst&)::{lambda(std::unique_ptr<sensor_msgs::msg::Image>)#1}"
+        }
+      ]
+    }
+  ],
+  "path_name_alias": {
+    "": ""
+  }
+}
