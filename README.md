@@ -1,3 +1,102 @@
+# github repo of v4l2_camera with zero-copy support
+
+this is not the official repo of ros2_v4l2_camera, please goto [the gitlab](https://gitlab.com/boldhearts/ros2_v4l2_camera)
+
+## introduction
+
+in this repo, the camera node can publish `shm_msgs::msg::Imagexm` based on [ros2_shm_msgs](https://github.com/ZhenshengLee/ros2_shm_msgs)
+
+With shm_msgs msg types, zero copy(during the IPC communication period) can be achieved, and transport latency and cpu usage can be reduced.
+
+You must select the msg type according the size of data, for example, `shm_msgs::msg::Image1m` for the `640X480 RBG8` image transport.
+
+This is because in most of ddses, the constraints of zero-copy transport is the bounded size of data.
+
+## usage of zero-copy transport
+
+### select rmw
+
+the dds config files canbe checked in [ros2_shm_msgs](https://github.com/ZhenshengLee/ros2_shm_msgs)
+
+for rmw_cyclonedds
+
+```sh
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI=file:///$HOME/shm_cyclonedds.xml
+
+# t0
+iox-roudi
+```
+
+for rmw_fastrtps_cpp
+
+```sh
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export FASTRTPS_DEFAULT_PROFILES_FILE=$HOME/shm_fastdds.xml
+export RMW_FASTRTPS_USE_QOS_FROM_XML=1
+```
+
+### build
+
+```sh
+cd src
+git clone https://github.com/ZhenshengLee/ros2_shm_msgs.git
+# the added work of zero-copy support is hosted in the `outdoor/rolling` branch.
+git clone -b outdoor/rolling https://github.com/ZhenshengLee/ros2_v4l2_camera.git
+colcon build
+```
+
+### run
+
+driver(after a camera pluged in, in my case that's a logitech525 usbcam)
+
+```sh
+ros2 run v4l2_camera v4l2_camera_shm1m_node --ros-args --log-level info
+# ros2 run v4l2_camera v4l2_camera_shm1m_node --ros-args --log-level debug
+```
+
+image1m_subscriber
+
+```sh
+cd install/v4l2_camera/lib/v4l2_camera
+./v4l2_camera_image1m_subscriber
+
+[INFO] [1654154565.559710174] [shm_image1m_subscriber]: Received...
+[INFO] [1654154565.559730953] [shm_image1m_subscriber]: get-image1m-transport-time: 0.253
+```
+
+image1m_rviz_bridge
+
+```sh
+# config topic remapping
+ros2 launch v4l2_camera shm_image1m_bridge.launch.py
+```
+
+rviz2
+
+```sh
+rviz2
+# add topic of image
+```
+
+see rqt_graph ![rqt_graph](./doc/image/rqt_graph.png)
+
+### performance
+
+run normal(basically shm) image tranport
+
+```sh
+# t1
+ros2 run v4l2_camera v4l2_camera_node --ros-args --log-level info
+# ros2 run v4l2_camera v4l2_camera_node --ros-args --log-level debug
+
+# t2
+cd install/v4l2_camera/lib/v4l2_camera
+./v4l2_camera_image_subscriber
+```
+
+in my pc of dell 3630, the zero-copy transport of a shm_msgs::msg::Image1m can save about 80% of transport time, from 1.4ms to 0.3ms
+
 # v4l2_camera
 
 A ROS 2 camera driver using Video4Linux2 (V4L2).

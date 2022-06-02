@@ -20,6 +20,9 @@
 #include <camera_info_manager/camera_info_manager.hpp>
 #include <image_transport/image_transport.hpp>
 
+#include "shm_msgs/msg/image.hpp"
+#include "shm_msgs/opencv_conversions.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 #include <rcl_interfaces/msg/parameter.hpp>
 
@@ -33,19 +36,23 @@
 namespace v4l2_camera
 {
 
+template<typename Topic>
 class V4L2Camera : public rclcpp::Node
 {
 public:
-  explicit V4L2Camera(rclcpp::NodeOptions const & options);
+  explicit V4L2Camera(rclcpp::NodeOptions const & options, bool const & is_shm);
 
   virtual ~V4L2Camera();
 
 private:
-  std::shared_ptr<V4l2CameraDevice> camera_;
+  std::shared_ptr<V4l2CameraDevice<Topic>> camera_;
 
   // Publisher used for intra process comm
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_;
+  // Publisher used for shm_msg transport comm
+  typename rclcpp::Publisher<Topic>::SharedPtr image_shm_pub_;
+  std::string m_shm_topic_name = "image_shm_invalid";
 
   // Publisher used for inter process comm
   image_transport::CameraPublisher camera_transport_pub_;
@@ -54,6 +61,8 @@ private:
 
   std::thread capture_thread_;
   std::atomic<bool> canceled_;
+
+  bool is_shm_{false};
 
   std::string camera_frame_id_;
   std::string output_encoding_;
@@ -69,9 +78,13 @@ private:
   bool requestImageSize(std::vector<int64_t> const & size);
 
   sensor_msgs::msg::Image::UniquePtr convert(sensor_msgs::msg::Image const & img) const;
+  void convert_shm(Topic & img) const;
 
   bool checkCameraInfo(
     sensor_msgs::msg::Image const & img,
+    sensor_msgs::msg::CameraInfo const & ci);
+  bool checkCameraInfo_shm(
+    Topic const & img,
     sensor_msgs::msg::CameraInfo const & ci);
 };
 
