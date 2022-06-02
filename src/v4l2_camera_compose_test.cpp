@@ -44,7 +44,7 @@ int main(int argc, char ** argv)
   rclcpp::executors::MultiThreadedExecutor exec{};
 
   auto intra_comms_options = rclcpp::NodeOptions{}.use_intra_process_comms(true);
-  auto camera_node = std::make_shared<v4l2_camera::V4L2Camera>(intra_comms_options);
+  auto camera_node = std::make_shared<v4l2_camera::V4L2Camera<shm_msgs::msg::Image8k>>(intra_comms_options, false);
   auto test_node = std::make_shared<ComposeTest>(intra_comms_options);
 
   exec.add_node(camera_node);

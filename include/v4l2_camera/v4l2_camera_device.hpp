@@ -15,6 +15,11 @@
 #ifndef V4L2_CAMERA__V4L2_CAMERA_DEVICE_HPP_
 #define V4L2_CAMERA__V4L2_CAMERA_DEVICE_HPP_
 
+#include <sensor_msgs/msg/image.hpp>
+
+#include "shm_msgs/msg/image.hpp"
+#include "shm_msgs/opencv_conversions.hpp"
+
 #include <map>
 #include <string>
 #include <utility>
@@ -31,10 +36,11 @@ namespace v4l2_camera
 
 /** Camera device using Video4Linux2
  */
+template<typename Topic>
 class V4l2CameraDevice
 {
 public:
-  explicit V4l2CameraDevice(std::string device);
+  explicit V4l2CameraDevice(std::string device, bool const & is_shm);
 
   bool open();
   bool start();
@@ -62,6 +68,7 @@ public:
   std::string getCameraName();
 
   sensor_msgs::msg::Image::UniquePtr capture();
+  bool capture_shm(Topic& img);
 
 private:
   /// Image buffer
@@ -73,6 +80,7 @@ private:
   };
 
   std::string device_;
+  bool is_shm_;
   int fd_;
 
   v4l2_capability capabilities_;

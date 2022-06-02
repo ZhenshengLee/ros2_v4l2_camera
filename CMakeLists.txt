@@ -23,12 +23,16 @@ find_package(rclcpp_components REQUIRED)
 find_package(camera_info_manager REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(shm_msgs REQUIRED)
+find_package(Boost QUIET)
 
 add_library(v4l2_camera
   src/v4l2_camera.cpp
   src/v4l2_camera_device.cpp)
 rclcpp_components_register_nodes(v4l2_camera "v4l2_camera::V4L2Camera")
-
+target_link_libraries(v4l2_camera
+  opencv_highgui
+)
 target_include_directories(v4l2_camera PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -38,7 +42,9 @@ ament_target_dependencies(v4l2_camera
   "rclcpp_components"
   "camera_info_manager"
   "cv_bridge"
-  "image_transport")
+  "image_transport"
+  "shm_msgs"
+  )
 
 target_compile_options(v4l2_camera PRIVATE -Werror)
 
@@ -79,13 +85,16 @@ target_include_directories(v4l2_camera_image_subscriber PUBLIC
 target_link_libraries(v4l2_camera_image_subscriber v4l2_camera)
 target_compile_options(v4l2_camera_image_subscriber PRIVATE -Werror)
 
+add_subdirectory(tool)
+
 # install launch files
 install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(TARGETS v4l2_camera_node v4l2_camera_compose_test v4l2_camera_image_subscriber
+install(TARGETS
+  v4l2_camera_node v4l2_camera_image_subscriber
   EXPORT export_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 

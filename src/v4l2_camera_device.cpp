@@ -30,15 +30,25 @@
 
 #include "v4l2_camera/fourcc.hpp"
 
+// Explicit Specialization
+template class v4l2_camera::V4l2CameraDevice<shm_msgs::msg::Image8k>;
+template class v4l2_camera::V4l2CameraDevice<shm_msgs::msg::Image512k>;
+template class v4l2_camera::V4l2CameraDevice<shm_msgs::msg::Image1m>;
+template class v4l2_camera::V4l2CameraDevice<shm_msgs::msg::Image2m>;
+template class v4l2_camera::V4l2CameraDevice<shm_msgs::msg::Image4m>;
+template class v4l2_camera::V4l2CameraDevice<shm_msgs::msg::Image8m>;
+
 using v4l2_camera::V4l2CameraDevice;
 using sensor_msgs::msg::Image;
 
-V4l2CameraDevice::V4l2CameraDevice(std::string device)
-: device_{std::move(device)}
+template<typename Topic>
+V4l2CameraDevice<Topic>::V4l2CameraDevice(std::string device, bool const & is_shm)
+: device_{std::move(device)}, is_shm_{is_shm}
 {
 }
 
-bool V4l2CameraDevice::open()
+template<typename Topic>
+bool V4l2CameraDevice<Topic>::open()
 {
   fd_ = ::open(device_.c_str(), O_RDWR);
 
@@ -114,7 +124,8 @@ bool V4l2CameraDevice::open()
   return true;
 }
 
-bool V4l2CameraDevice::start()
+template<typename Topic>
+bool V4l2CameraDevice<Topic>::start()
 {
   RCLCPP_INFO(rclcpp::get_logger("v4l2_camera"), "Starting camera");
   if (!initMemoryMapping()) {
@@ -149,7 +160,8 @@ bool V4l2CameraDevice::start()
   return true;
 }
 
-bool V4l2CameraDevice::stop()
+template<typename Topic>
+bool V4l2CameraDevice<Topic>::stop()
 {
   RCLCPP_INFO(rclcpp::get_logger("v4l2_camera"), "Stopping camera");
   // Stop stream
@@ -179,7 +191,8 @@ bool V4l2CameraDevice::stop()
   return true;
 }
 
-std::string V4l2CameraDevice::getCameraName()
+template<typename Topic>
+std::string V4l2CameraDevice<Topic>::getCameraName()
 {
   auto name = std::string{reinterpret_cast<char *>(capabilities_.card)};
   std::transform(name.begin(), name.end(), name.begin(), ::tolower);
@@ -187,7 +200,8 @@ std::string V4l2CameraDevice::getCameraName()
   return name;
 }
 
-Image::UniquePtr V4l2CameraDevice::capture()
+template<typename Topic>
+Image::UniquePtr V4l2CameraDevice<Topic>::capture()
 {
   auto buf = v4l2_buffer{};
 
@@ -235,7 +249,60 @@ Image::UniquePtr V4l2CameraDevice::capture()
   return img;
 }
 
-int32_t V4l2CameraDevice::getControlValue(uint32_t id)
+template<typename Topic>
+bool V4l2CameraDevice<Topic>::capture_shm(Topic& img)
+{
+  auto buf = v4l2_buffer{};
+
+  buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  buf.memory = V4L2_MEMORY_MMAP;
+
+  // Dequeue buffer with new image
+  if (-1 == ioctl(fd_, VIDIOC_DQBUF, &buf)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("v4l2_camera"),
+      "Error dequeueing buffer: %s (%s)", strerror(errno),
+      std::to_string(errno).c_str());
+    return false;
+  }
+
+  // Requeue buffer to be reused for new captures
+  if (-1 == ioctl(fd_, VIDIOC_QBUF, &buf)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("v4l2_camera"),
+      "Error re-queueing buffer: %s (%s)", strerror(errno),
+      std::to_string(errno).c_str());
+    return false;
+  }
+
+  // Create image object
+  img.width = cur_data_format_.width;
+  img.height = cur_data_format_.height;
+  img.step = cur_data_format_.bytesPerLine;
+  if (cur_data_format_.pixelFormat == V4L2_PIX_FMT_YUYV) {
+    shm_msgs::set_str(img.encoding, shm_msgs::image_encodings::YUV422_YUY2);
+  } else if (cur_data_format_.pixelFormat == V4L2_PIX_FMT_GREY) {
+    shm_msgs::set_str(img.encoding, shm_msgs::image_encodings::MONO8);
+  } else {
+    RCLCPP_WARN(
+      rclcpp::get_logger("v4l2_camera"),
+      "Current pixel format is not supported yet: %s %d",
+      FourCC::toString(cur_data_format_.pixelFormat).c_str(),
+      cur_data_format_.pixelFormat);
+  }
+
+  // check size
+  if(cur_data_format_.imageByteSize > Topic::DATA_MAX_SIZE) {
+    throw std::runtime_error("imageByteSize > Topic::DATA_MAX_SIZE, please check!");
+  }
+
+  auto const & buffer = buffers_[buf.index];
+  std::copy(buffer.start, buffer.start + cur_data_format_.imageByteSize, img.data.begin());
+  return true;
+}
+
+template<typename Topic>
+int32_t V4l2CameraDevice<Topic>::getControlValue(uint32_t id)
 {
   auto ctrl = v4l2_control{};
   ctrl.id = id;
@@ -249,7 +316,8 @@ int32_t V4l2CameraDevice::getControlValue(uint32_t id)
   return ctrl.value;
 }
 
-bool V4l2CameraDevice::setControlValue(uint32_t id, int32_t value)
+template<typename Topic>
+bool V4l2CameraDevice<Topic>::setControlValue(uint32_t id, int32_t value)
 {
   auto ctrl = v4l2_control{};
   ctrl.id = id;
@@ -267,7 +335,8 @@ bool V4l2CameraDevice::setControlValue(uint32_t id, int32_t value)
   return true;
 }
 
-bool V4l2CameraDevice::requestDataFormat(const PixelFormat & format)
+template<typename Topic>
+bool V4l2CameraDevice<Topic>::requestDataFormat(const PixelFormat & format)
 {
   auto formatReq = v4l2_format{};
   formatReq.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -296,7 +365,8 @@ bool V4l2CameraDevice::requestDataFormat(const PixelFormat & format)
   return true;
 }
 
-void V4l2CameraDevice::listImageFormats()
+template<typename Topic>
+void V4l2CameraDevice<Topic>::listImageFormats()
 {
   image_formats_.clear();
 
@@ -309,7 +379,8 @@ void V4l2CameraDevice::listImageFormats()
   }
 }
 
-void V4l2CameraDevice::listImageSizes()
+template<typename Topic>
+void V4l2CameraDevice<Topic>::listImageSizes()
 {
   image_sizes_.clear();
   struct v4l2_frmsizeenum frmSizeEnum;
@@ -344,7 +415,8 @@ void V4l2CameraDevice::listImageSizes()
   }
 }
 
-V4l2CameraDevice::ImageSizesDescription V4l2CameraDevice::listDiscreteImageSizes(
+template<typename Topic>
+typename V4l2CameraDevice<Topic>::ImageSizesDescription V4l2CameraDevice<Topic>::listDiscreteImageSizes(
   v4l2_frmsizeenum frm_size_enum)
 {
   auto sizes = ImageSizesVector{};
@@ -357,7 +429,8 @@ V4l2CameraDevice::ImageSizesDescription V4l2CameraDevice::listDiscreteImageSizes
   return std::make_pair(ImageSizeType::DISCRETE, std::move(sizes));
 }
 
-V4l2CameraDevice::ImageSizesDescription V4l2CameraDevice::listStepwiseImageSizes(
+template<typename Topic>
+typename V4l2CameraDevice<Topic>::ImageSizesDescription V4l2CameraDevice<Topic>::listStepwiseImageSizes(
   v4l2_frmsizeenum frm_size_enum)
 {
   // Three entries: min size, max size and stepsize
@@ -369,7 +442,8 @@ V4l2CameraDevice::ImageSizesDescription V4l2CameraDevice::listStepwiseImageSizes
   return std::make_pair(ImageSizeType::STEPWISE, std::move(sizes));
 }
 
-V4l2CameraDevice::ImageSizesDescription V4l2CameraDevice::listContinuousImageSizes(
+template<typename Topic>
+typename V4l2CameraDevice<Topic>::ImageSizesDescription V4l2CameraDevice<Topic>::listContinuousImageSizes(
   v4l2_frmsizeenum frm_size_enum)
 {
   // Two entries: min size and max size, stepsize is implicitly 1
@@ -380,7 +454,8 @@ V4l2CameraDevice::ImageSizesDescription V4l2CameraDevice::listContinuousImageSiz
   return std::make_pair(ImageSizeType::CONTINUOUS, std::move(sizes));
 }
 
-void V4l2CameraDevice::listControls()
+template<typename Topic>
+void V4l2CameraDevice<Topic>::listControls()
 {
   controls_.clear();
 
@@ -423,7 +498,8 @@ void V4l2CameraDevice::listControls()
   }
 }
 
-bool V4l2CameraDevice::initMemoryMapping()
+template<typename Topic>
+bool V4l2CameraDevice<Topic>::initMemoryMapping()
 {
   auto req = v4l2_requestbuffers{};
 
