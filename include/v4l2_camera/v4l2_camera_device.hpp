@@ -15,12 +15,12 @@
 #ifndef V4L2_CAMERA__V4L2_CAMERA_DEVICE_HPP_
 #define V4L2_CAMERA__V4L2_CAMERA_DEVICE_HPP_
 
-#include <sensor_msgs/msg/image.hpp>
-
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <sensor_msgs/msg/image.hpp>
 
 #include "v4l2_camera/control.hpp"
 #include "v4l2_camera/image_format.hpp"
