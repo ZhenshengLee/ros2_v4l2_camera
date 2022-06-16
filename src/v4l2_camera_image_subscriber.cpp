@@ -30,13 +30,20 @@ public:
         std::stringstream ss;
         ss << "Image message address [RECEIVE]:\t" << img.get();
         auto time_offset_ns = (now() - img->header.stamp).nanoseconds();
+        auto timestamp_offset_ns = (rclcpp::Time(img->header.stamp) - m_last_image_ts).nanoseconds();
         auto time_offset_ms = time_offset_ns / 1000000.0F;
+        auto timestamp_offset_ms = timestamp_offset_ns / 1000000.0F;
         RCLCPP_INFO(get_logger(), "get-image-transport-time: %.3f", time_offset_ms);
+        if(m_last_image_ts.nanoseconds() > 0.0)
+        {
+          RCLCPP_INFO(get_logger(), "get-image-timestamp_offset-time: %.3f", timestamp_offset_ms);
+        }
       });
   }
 
 private:
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr img_sub_;
+  rclcpp::Time m_last_image_ts{0, 0, RCL_ROS_TIME};
 };
 
 int main(int argc, char ** argv)

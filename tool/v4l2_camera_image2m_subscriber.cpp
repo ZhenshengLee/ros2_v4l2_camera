@@ -41,9 +41,15 @@ public:
       // RCLCPP_INFO(this->get_logger(), "image_encoding(%s), frameid(%s)", (shm_msgs::get_str(msg->encoding)).c_str(), (shm_msgs::get_str(msg->header.frame_id)).c_str());
 
       auto time_offset_ns = (now() - m_last_cvimage->header.stamp).nanoseconds();
+      auto timestamp_offset_ns = (rclcpp::Time(msg->header.stamp) - m_last_image_ts).nanoseconds();
       auto time_offset_ms = time_offset_ns / 1000000.0F;
+      auto timestamp_offset_ms = timestamp_offset_ns / 1000000.0F;
       RCLCPP_INFO(get_logger(), "get-image2m-transport-time: %.3f", time_offset_ms);
-
+      if(m_last_image_ts.nanoseconds() > 0.0)
+      {
+        RCLCPP_INFO(get_logger(), "get-image2m-timestamp_offset-time: %.3f", timestamp_offset_ms);
+      }
+      m_last_image_ts = msg->header.stamp;
       // cv::imshow("im show", m_last_cvimage->image);
       // cv::waitKey(0);
     };
@@ -56,6 +62,7 @@ private:
   rclcpp::Subscription<Topic>::SharedPtr m_subscription;
 
   shm_msgs::CvImageConstPtr m_last_cvimage;
+  rclcpp::Time m_last_image_ts{0, 0, RCL_ROS_TIME};
 };
 
 int main(int argc, char *argv[]) {
