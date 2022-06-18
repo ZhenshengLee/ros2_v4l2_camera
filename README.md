@@ -67,7 +67,7 @@ publishes images as `sensor_msgs/Image` messages.
 
 #### Published Topics
 
-* `/raw_image` - `sensor_msgs/Image`
+* `/image_raw` - `sensor_msgs/Image`
 
     The image.
 
