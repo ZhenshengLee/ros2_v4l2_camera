@@ -17,16 +17,15 @@
 
 #include "v4l2_camera/v4l2_camera_device.hpp"
 
-#include <camera_info_manager/camera_info_manager.hpp>
-#include <image_transport/image_transport.hpp>
-
-#include <rclcpp/rclcpp.hpp>
-#include <rcl_interfaces/msg/parameter.hpp>
-
 #include <memory>
 #include <string>
 #include <map>
 #include <vector>
+
+#include <camera_info_manager/camera_info_manager.hpp>
+#include <image_transport/image_transport.hpp>
+#include <rcl_interfaces/msg/parameter.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include "v4l2_camera/visibility_control.h"
 

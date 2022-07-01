@@ -14,19 +14,19 @@
 
 #include "v4l2_camera/v4l2_camera_device.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/image_encodings.hpp>
-
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
-#include <vector>
-#include <map>
 #include <algorithm>
+#include <map>
+#include <memory>
 #include <string>
 #include <utility>
-#include <memory>
+#include <vector>
+
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/image_encodings.hpp>
 
 #include "v4l2_camera/fourcc.hpp"
 

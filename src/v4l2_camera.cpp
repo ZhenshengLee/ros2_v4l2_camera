@@ -14,18 +14,17 @@
 
 #include "v4l2_camera/v4l2_camera.hpp"
 
-#include <sensor_msgs/image_encodings.hpp>
 #include <cv_bridge/cv_bridge.h>
 
-#include <string>
+#include <algorithm>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
-#include <algorithm>
+
+#include <sensor_msgs/image_encodings.hpp>
 
 #include "v4l2_camera/fourcc.hpp"
-
-#include "rclcpp_components/register_node_macro.hpp"
 
 using namespace std::chrono_literals;
 
@@ -349,8 +348,8 @@ bool V4L2Camera::requestImageSize(std::vector<int64_t> const & size)
   if (size.size() != 2) {
     RCLCPP_WARN(
       get_logger(),
-      "Invalid image size; expected dimensions: 2, actual: %s",
-      std::to_string(size.size()).c_str());
+      "Invalid image size; expected dimensions: 2, actual: %lu",
+      size.size());
     return false;
   }
 
@@ -384,4 +383,5 @@ bool V4L2Camera::checkCameraInfo(
 
 }  // namespace v4l2_camera
 
+#include "rclcpp_components/register_node_macro.hpp"
 RCLCPP_COMPONENTS_REGISTER_NODE(v4l2_camera::V4L2Camera)
