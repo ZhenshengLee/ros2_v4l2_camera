@@ -130,8 +130,13 @@ void V4L2Camera::createParameters()
     output_encoding_description);
 
   // Camera info parameters
-  auto camera_info_url = std::string{};
-  if (get_parameter("camera_info_url", camera_info_url)) {
+  auto camera_info_url_description = rcl_interfaces::msg::ParameterDescriptor();
+  camera_info_url_description.description = "The location for getting camera calibration data";
+  camera_info_url_description.read_only = true;
+  auto camera_info_url = declare_parameter<std::string>(
+    "camera_info_url", "",
+    camera_info_url_description);
+  if (camera_info_url != "") {
     if (cinfo_->validateURL(camera_info_url)) {
       cinfo_->loadCameraInfo(camera_info_url);
     } else {
