@@ -2,8 +2,8 @@
 Changelog for package v4l2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.0 (2022-09-04)
+------------------
 * Use cv_bridge to perform conversions
 * Fix: Image topic should be image_raw, not raw_image, in README.md
 * Fix: Properly declare camera_info_url parameter
