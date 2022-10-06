@@ -14,14 +14,13 @@
 
 #include "v4l2_camera/v4l2_camera.hpp"
 
-#include <cv_bridge/cv_bridge.h>
-
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <cv_bridge/cv_bridge.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 
 #include "v4l2_camera/fourcc.hpp"
