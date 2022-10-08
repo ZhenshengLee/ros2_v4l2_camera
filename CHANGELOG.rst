@@ -2,8 +2,8 @@
 Changelog for package v4l2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.1 (2022-10-08)
+------------------
 * Rename include to resolve deprecation warning.
 * Contributors: Sander G. van Dijk, Steven! Ragnarök
 
