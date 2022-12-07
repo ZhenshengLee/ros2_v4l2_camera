@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(v4l2_camera)
 
+list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_LIST_DIR}/cmake)
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -24,7 +26,10 @@ find_package(camera_info_manager REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(shm_msgs REQUIRED)
-find_package(Boost QUIET)
+find_package(Boost REQUIRED system filesystem date_time iostreams serialization)
+find_package(VTK REQUIRED)
+find_package(libusb REQUIRED)
+
 
 add_library(v4l2_camera
   src/v4l2_camera.cpp
